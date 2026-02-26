@@ -48,6 +48,9 @@ const BEST_UI_JOUEUR_DRAWING_REQUIRED_TOOLS = Object.freeze({
   clear: Object.freeze(["clear", "clear-all", "trash"])
 });
 let BEST_UI_JOUEUR_LAST_STATUS = null;
+let BEST_UI_JOUEUR_AUX_REFRESH_PROMISE = null;
+let BEST_UI_JOUEUR_AUX_REFRESH_QUEUED = false;
+let BEST_UI_JOUEUR_AUX_REFRESH_REPORT_REASON = "";
 
 function t(key, fallback, data = null) {
   const localized = data
@@ -384,6 +387,33 @@ function applyBestUiJoueurAuxiliaryUiChrome() {
 
 async function refreshBestUiJoueurAuxiliaryUiChrome() {
   return applyBestUiJoueurAuxiliaryUiChrome();
+}
+
+function queueBestUiJoueurAuxiliaryUiChromeRefresh({ reportReason = "" } = {}) {
+  if (reportReason) BEST_UI_JOUEUR_AUX_REFRESH_REPORT_REASON = String(reportReason);
+  if (BEST_UI_JOUEUR_AUX_REFRESH_PROMISE) {
+    BEST_UI_JOUEUR_AUX_REFRESH_QUEUED = true;
+    return BEST_UI_JOUEUR_AUX_REFRESH_PROMISE;
+  }
+
+  BEST_UI_JOUEUR_AUX_REFRESH_PROMISE = (async () => {
+    do {
+      BEST_UI_JOUEUR_AUX_REFRESH_QUEUED = false;
+      await refreshBestUiJoueurAuxiliaryUiChrome();
+      if (BEST_UI_JOUEUR_AUX_REFRESH_REPORT_REASON) {
+        const reason = BEST_UI_JOUEUR_AUX_REFRESH_REPORT_REASON;
+        BEST_UI_JOUEUR_AUX_REFRESH_REPORT_REASON = "";
+        reportBestUiJoueurStatusChange(reason);
+      }
+      if (BEST_UI_JOUEUR_AUX_REFRESH_QUEUED) {
+        await new Promise(resolve => requestAnimationFrame(() => resolve()));
+      }
+    } while (BEST_UI_JOUEUR_AUX_REFRESH_QUEUED);
+  })().finally(() => {
+    BEST_UI_JOUEUR_AUX_REFRESH_PROMISE = null;
+  });
+
+  return BEST_UI_JOUEUR_AUX_REFRESH_PROMISE;
 }
 
 function getBestUiJoueurUserRoleValue(roleName, fallback) {
@@ -873,9 +903,7 @@ function registerModuleSettings() {
     type: Boolean,
     default: false,
     onChange: () => {
-      void refreshBestUiJoueurAuxiliaryUiChrome().then(() => {
-        reportBestUiJoueurStatusChange("hotbar-toggle");
-      });
+      void queueBestUiJoueurAuxiliaryUiChromeRefresh({ reportReason: "hotbar-toggle" });
     }
   });
 
@@ -944,15 +972,15 @@ Hooks.on("getSceneControlButtons", controls => {
 });
 
 Hooks.on("renderHotbar", () => {
-  void refreshBestUiJoueurAuxiliaryUiChrome();
+  void queueBestUiJoueurAuxiliaryUiChromeRefresh();
 });
 
 Hooks.on("renderSidebar", () => {
-  void refreshBestUiJoueurAuxiliaryUiChrome();
+  void queueBestUiJoueurAuxiliaryUiChromeRefresh();
 });
 
 Hooks.on("changeSidebarTab", () => {
-  void refreshBestUiJoueurAuxiliaryUiChrome();
+  void queueBestUiJoueurAuxiliaryUiChromeRefresh();
 });
 
 export {
