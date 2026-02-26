@@ -1,0 +1,37 @@
+{
+  "id": "bm-ui-joueur",
+  "title": "bm-ui-joueur",
+  "description": "Module Foundry dedie aux ajustements d'interface joueur (Best UI Joueur).",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "authors": [
+    {
+      "name": "AbelGuillouet&Codex"
+    }
+  ],
+  "esmodules": [
+    "scripts/main.mjs"
+  ],
+  "languages": [
+    {
+      "lang": "fr",
+      "name": "Francais",
+      "path": "lang/fr.json"
+    }
+  ],
+  "relationships": {
+    "systems": [
+      {
+        "id": "bloodman",
+        "type": "system",
+        "compatibility": {
+          "minimum": "0.13.0",
+          "verified": "0.13.0"
+        }
+      }
+    ]
+  }
+}
