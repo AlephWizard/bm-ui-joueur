@@ -389,6 +389,13 @@ async function refreshBestUiJoueurAuxiliaryUiChrome() {
   return applyBestUiJoueurAuxiliaryUiChrome();
 }
 
+function waitForNextBestUiFrame() {
+  if (typeof requestAnimationFrame === "function") {
+    return new Promise(resolve => requestAnimationFrame(() => resolve()));
+  }
+  return new Promise(resolve => setTimeout(resolve, 0));
+}
+
 function queueBestUiJoueurAuxiliaryUiChromeRefresh({ reportReason = "" } = {}) {
   if (reportReason) BEST_UI_JOUEUR_AUX_REFRESH_REPORT_REASON = String(reportReason);
   if (BEST_UI_JOUEUR_AUX_REFRESH_PROMISE) {
@@ -406,7 +413,7 @@ function queueBestUiJoueurAuxiliaryUiChromeRefresh({ reportReason = "" } = {}) {
         reportBestUiJoueurStatusChange(reason);
       }
       if (BEST_UI_JOUEUR_AUX_REFRESH_QUEUED) {
-        await new Promise(resolve => requestAnimationFrame(() => resolve()));
+        await waitForNextBestUiFrame();
       }
     } while (BEST_UI_JOUEUR_AUX_REFRESH_QUEUED);
   })().finally(() => {
